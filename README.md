@@ -13,6 +13,9 @@ make sure to have `.env` , `server.pem` and  `server.key` files in the root dire
 
 #### The `.env` file:
 ```.dotenv
+# token secret key for decode and encode tokens
+TOKEN_KEY=                <STRING_KEY_64_BITS>
+
 # database configurations
 DATABASE_URL=             <JDBC_DATABASE_URL>
 SM_DB_KEY=                <DATABSAE_SM_KEY>
