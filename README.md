@@ -1,8 +1,8 @@
-# auth-service
+# wallet-service
 
 ---
 
-This repository's responsible for authentication users and checks token validity.
+This repository's responsible for serving wallet data, updating and ctreating new wallets. 
 
 ---
 
@@ -46,6 +46,6 @@ docker build -t golden:latest -f Setup/GoldenCI/Dockerfile . --no-cache
 docker build -t runner:golden-latest -f Setup/RunnerCI/Dockerfile . --no-cache
 
 # run runner image
-docker run -it -d -p 443:443 runner:golden-latest --name runner-auth-service
+docker run -it -d -p 443:443 runner:golden-latest --name runner-wallet-service
 ```
 ---
