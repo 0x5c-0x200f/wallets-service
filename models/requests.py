@@ -16,7 +16,7 @@ class CreateWalletRequest(BaseRequest):
     force_testnet: Optional[bool]           =   Field(default=False, alias="force_testnet")
     network: Optional[str]                  =   Field(default="bitcoin", alias="network")
     user_id: str                            =   Field(default=None, alias="user_id")
-    def __repr__(self): return f"<CreateWalletRequest %e>" % self.tojson()
+    def __repr__(self): return f"<CreateWalletRequest %r>" % self.tojson()
 
 
 class UpdateWalletInfoRequest(BaseRequest):
@@ -26,4 +26,4 @@ class UpdateWalletInfoRequest(BaseRequest):
     force_testnet: Optional[bool]           =   Field(default=False, alias="force_testnet")
     public_address: str                     =   Field(..., alias="public_address")
     validated_by_blockchain: Optional[bool] =   Field(default=False, alias="validated_by_blockchain")
-    def __repr__(self): return f"<UpdateWalletInfoRequest %e>" % self.tojson()
+    def __repr__(self): return f"<UpdateWalletInfoRequest %r>" % self.tojson()

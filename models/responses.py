@@ -22,5 +22,5 @@ class UserWalletObject(BaseResponse):
 class WalletsResponse(BaseResponse):
     user_id: str                                =    Field(..., alias="user_id")
     user_wallets: list[UserWalletObject]        =    Field(..., alias="user_wallets")
-    def __repr__(self): return f"<WalletsResponse %e>" % self.tojson()
+    def __repr__(self): return f"<WalletsResponse %r>" % self.tojson()
 
