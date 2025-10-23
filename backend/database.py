@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Annotated, Generator, Optional
 from decouple import config as EnvConfig
 from fastapi import Depends
-from sqlmodel import SQLModel, Session, select, create_engine, update
+from sqlmodel import SQLModel, Session, select, create_engine, update, delete
 from sqlalchemy.orm import sessionmaker
 from backend.tables import Wallet, User
 from utils import sm_get_secret_data, Singleton, timestamp_update, Logger
@@ -176,7 +176,8 @@ class DbConnectionPool(metaclass=Singleton):
                 statement = update(resource).where(resource.wallet_id == wallet.wallet_id).values(
                     {field: getattr(user, field) for field in user.model_fields_set}
                 )
-
+            else:
+                raise ValueError("Either user or wallet must be provided")
             self._session.exec(statement)
             self._session.commit()
             self._session.flush()
@@ -184,6 +185,28 @@ class DbConnectionPool(metaclass=Singleton):
         except Exception as e:
             logger.error(f"call update_user, end with error : {e}")
             raise e
+
+    def delete_wallet(self, wallet_id: str) -> bool:
+        try:
+            logger.debug(f"call delete_wallet, params({wallet_id=})")
+            if self._session is None:
+                logger.error("Session not opened. Use 'with dbpool as conn:'")
+                raise RuntimeError("Session not opened. Use 'with dbpool as conn:'")
+            wallet = self.find('wallet', wallet_id=wallet_id)
+            if not wallet:
+                raise ValueError(f"Wallet with id={wallet_id} not found")
+            user = self.find('user', user_id=wallet.user_id)
+            if wallet.wallet_id not in user.wallets:
+                raise ValueError(f"Wallet with id={wallet_id} is not associated with user {user.user_id}")
+            user.wallets.remove(wallet)
+            statement = delete(Wallet).where(Wallet.wallet_id == wallet_id)
+            self._session.exec(statement)
+            self._session.commit()
+            self._session.flush()
+            return True
+        except Exception as e:
+            logger.error(f"call delete_wallet, end with error : {e}")
+            return False
 
 
 dbpool = DbConnectionPool()
