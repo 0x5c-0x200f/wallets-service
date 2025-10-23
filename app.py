@@ -42,12 +42,15 @@ async def favicon_ico():
     return FileResponse("static/favicon.ico", media_type="image/x-icon")
 
 
-@app.post("/create", response_model=WalletsResponse)
+@app.post("/wallets", response_model=WalletsResponse)
 @test_authorization_token
-async def create_wallet(request: CreateWalletRequest, req: Request):
+async def create_wallet(
+        create_wallet_payload: CreateWalletRequest,
+        request: Request
+):
     logger.info("============ Create Wallet ============")
-    logger.debug(f"Logging in user {request=}")
-    session_id = await get_current_user_session(req)
+    logger.debug(f"Logging in user {create_wallet_payload=}")
+    session_id = await get_current_user_session(request)
     if not session_id:
         logger.error(f"cannot login without session id")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
@@ -61,19 +64,19 @@ async def create_wallet(request: CreateWalletRequest, req: Request):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         logger.debug(f"User found {user=}")
         validation_status = await broadcaster.test_wallet(
-            address=request.public_address,
-            network=request.network,
-            auth_token=req.headers.get('Authorization').split(' ')[1]
+            address=create_wallet_payload.public_address,
+            network=create_wallet_payload.network,
+            auth_token=request.headers.get('Authorization').split(' ')[1]
         ).get('results').get('mempool').get('ok')
         if not validation_status:
             logger.error(f"wallet is invalid")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid wallet")
         wallet = conn.add_wallet(
             user_id=user.user_id,
-            name=request.name,
-            network=request.network,
-            force_testnet=request.force_testnet,
-            public_address=request.public_address,
+            name=create_wallet_payload.name,
+            network=create_wallet_payload.network,
+            force_testnet=create_wallet_payload.force_testnet,
+            public_address=create_wallet_payload.public_address,
             validated_by_blockchain=validation_status
         )
         logger.debug(f"User create {wallet=}")
@@ -82,39 +85,43 @@ async def create_wallet(request: CreateWalletRequest, req: Request):
         return WalletsResponse(user_id=user.user_id, user_wallets=user.wallets)
 
 
-@app.put("/update", response_model=WalletsResponse)
+@app.put("/wallets", response_model=WalletsResponse)
 @test_authorization_token
 async def update_wallet(request: UpdateWalletInfoRequest, req: Request):
+async def update_wallet(
+        update_wallet_payload: UpdateWalletInfoRequest,
+        request: Request
+):
     logger.info("============ Update Wallet ============")
-    logger.debug(f"Registering user {request=}")
-    session_id = await get_current_user_session(req)
+    logger.debug(f"Registering user {update_wallet_payload=}")
+    session_id = await get_current_user_session(request)
     if not session_id:
         logger.error(f"cannot register without session id")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     logger.debug(f"session id {session_id=}")
     user = None
     with dbpool as conn:
-        logger.debug(f"searching for user {request.username=}")
+        logger.debug(f"searching for user {update_wallet_payload.username=}")
         user = conn.find('user', user_id=session_id)
         if user:
             logger.error(f"not found {user=}")
             raise HTTPException(status_code=status.HTTP_302_FOUND, detail="User already exists")
-        wallet = conn.find('wallet', wallet_id=request.wallet_id)
+        wallet = conn.find('wallet', wallet_id=update_wallet_payload.wallet_id)
         if not wallet:
-            logger.error(f"wallet not found {request.wallet_id=}")
+            logger.error(f"wallet not found {update_wallet_payload.wallet_id=}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wallet not found")
         if not check_association(user=user, wallet=wallet):
             logger.error(f"{wallet.wallet_id=} not associated to{user.user_id=}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wallet not found")
         logger.debug(f"User found {user=}")
-        wallet = conn.update('wallet', wallet=request)
+        wallet = conn.update('wallet', wallet=update_wallet_payload)
         logger.debug(f"User update {wallet=}")
         conn.update('user', user=user)
         logger.debug(f"User update {user=}")
         return WalletsResponse(user_id=user.user_id, user_wallets=user.wallets)
 
 
-@app.get("/get", response_model=WalletsResponse)
+@app.get("/wallets", response_model=WalletsResponse)
 @test_authorization_token
 async def get_wallet(
         req: Request,
@@ -123,7 +130,7 @@ async def get_wallet(
 ):
     logger.info("============ Get Wallet ============")
     logger.debug(f"call get_wallet, params({wallet_id=})")
-    session_id = await get_current_user_session(req)
+    session_id = await get_current_user_session(request)
     if not session_id:
         logger.error(f"cannot login without session id")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
