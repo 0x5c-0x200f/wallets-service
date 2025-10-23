@@ -87,7 +87,6 @@ async def create_wallet(
 
 @app.put("/wallets", response_model=WalletsResponse)
 @test_authorization_token
-async def update_wallet(request: UpdateWalletInfoRequest, req: Request):
 async def update_wallet(
         update_wallet_payload: UpdateWalletInfoRequest,
         request: Request
@@ -124,9 +123,8 @@ async def update_wallet(
 @app.get("/wallets", response_model=WalletsResponse)
 @test_authorization_token
 async def get_wallet(
-        req: Request,
-        wallet_id: str = Query(..., min_length=16),
-
+        request: Request,
+        wallet_id: str = Query(..., min_length=16)
 ):
     logger.info("============ Get Wallet ============")
     logger.debug(f"call get_wallet, params({wallet_id=})")
