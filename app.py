@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from models.requests import CreateWalletRequest, UpdateWalletInfoRequest
 from backend.database import dbpool, create_db_and_tables
-from models.responses import WalletsResponse
+from models.responses import WalletsResponse, WalletDeletedResponse
 from security.tokenization import test_authorization_token, get_current_user_session
 from services.broadcaster import broadcaster
 from utils import check_association
@@ -146,6 +146,37 @@ async def get_wallet(
         logger.debug(f"User found {wallet=}")
         return WalletsResponse(user_id=user.user_id, user_wallets=user.wallets)
 
+@app.delete("/wallets", response_model=WalletDeletedResponse)
+@test_authorization_token
+async def delete_wallet(
+        request: Request,
+        wallet_id: str = Query(..., min_length=16)
+):
+    logger.info("============ Delete Wallet ============")
+    logger.debug(f"call delete_wallet, params({wallet_id=})")
+    session_id = await get_current_user_session(request)
+    if not session_id:
+        logger.error(f"cannot login without session id")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    logger.debug(f"session id {session_id=}")
+    user = None
+    with dbpool as conn:
+        logger.debug(f"Searching for user {wallet_id=}")
+        user = conn.find('user', user_id=session_id)
+        if not user:
+            logger.error(f"{user=} not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        logger.debug(f"User found {user=}")
+        wallet = conn.find('wallet', wallet_id=wallet_id)
+        if not wallet:
+            logger.error(f"wallet not found {wallet_id=}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wallet not found")
+        if not check_association(user=user, wallet=wallet):
+            logger.error(f"{wallet.wallet_id=} not associated to{user.user_id=}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wallet not found")
+        deleted = conn.delete_wallet(wallet_id=wallet_id)
+        logger.debug(f"User found {wallet=}")
+        return WalletDeletedResponse(wallet_id=wallet_id, deleted=deleted)
 
 
 class PathWhitelistMiddleware(BaseHTTPMiddleware):
