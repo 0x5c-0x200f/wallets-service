@@ -1,12 +1,9 @@
 from typing import Optional
 from json import loads, dumps
-from utils import timestamp_update
 from pydantic import BaseModel, Field
 
 
 class BaseRequest(BaseModel):
-    update_at: Optional[str]                =   Field(default_factory=timestamp_update, alias="update_at")
-    created_at: Optional[str]               =   Field(default_factory=timestamp_update, alias="created_at")
     def tojson(self): return loads(dumps(self.__dict__))
 
 

@@ -24,3 +24,8 @@ class WalletsResponse(BaseResponse):
     user_wallets: list[UserWalletObject]        =    Field(..., alias="user_wallets")
     def __repr__(self): return f"<WalletsResponse %r>" % self.tojson()
 
+
+class WalletDeletedResponse(BaseResponse):
+    wallet_id: str                              =   Field(..., alias="wallet_id")
+    deleted: bool                               =   Field(default=False, alias="deleted")
+    def __repr__(self): return f"<WalletDeletedResponse %r>" % self.tojson()
