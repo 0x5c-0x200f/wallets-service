@@ -16,7 +16,6 @@ def run_app():
         "port": 443,
         "server_header": False,
         "log_level": logging.DEBUG,
-        "reload": True,
         "ssl_certfile": pem,
         "ssl_keyfile": key
     }
