@@ -14,7 +14,7 @@ from utils import check_association
 
 logger = Logger("app")
 
-app = FastAPI(title="YouesBTC Wallets Service", version="0.1.0")
+app = FastAPI(title="YoursBTC Wallets Service", version="0.1.0")
 
 # Cross Origins trusted hosts
 allowed_origins = ["https://yoursbtc.com", "http://localhost:4200"]
