@@ -10,7 +10,6 @@ class BaseResponse(BaseModel):
 class UserWalletObject(BaseResponse):
     wallet_name: str                            =   Field(..., alias="wallet_name")
     wallet_id: str                              =   Field(..., alias="wallet_id")
-    wallet_owner: str                           =   Field(..., alias="wallet_owner")
     created_at: str                             =   Field(..., alias="created_at")
     public_address: str                         =   Field(..., alias="public_address")
     network: str                                =   Field(..., alias="network")

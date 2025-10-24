@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from models.requests import CreateWalletRequest, UpdateWalletInfoRequest
 from backend.database import dbpool, create_db_and_tables
-from models.responses import WalletsResponse, WalletDeletedResponse
+from models.responses import WalletsResponse, WalletDeletedResponse, UserWalletObject
 from security.tokenization import test_authorization_token, get_current_user_session
 from services.broadcaster import broadcaster
 from utils import check_association
@@ -149,7 +149,19 @@ async def get_wallet(
             logger.error(f"{wallet.wallet_id=} not associated to{user.user_id=}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wallet not found")
         logger.debug(f"User found {wallet=}")
-        return WalletsResponse(user_id=user.user_id, user_wallets=user.wallets)
+        user_wallets = [
+            UserWalletObject(
+                wallet_name=wallet.name,
+                wallet_id=wallet.wallet_id,
+                network=wallet.network,
+                blockchain_validated=wallet.validated_by_blockchain,
+                public_address=wallet.public_address,
+                created_at=wallet.created_at.isoformat(),
+                force_testnet=wallet.force_testnet
+            )
+            for wallet in user.wallets
+        ]
+        return WalletsResponse(user_id=user.user_id, user_wallets=user_wallets)
 
 @app.delete("/wallets", response_model=WalletDeletedResponse)
 @test_authorization_token
